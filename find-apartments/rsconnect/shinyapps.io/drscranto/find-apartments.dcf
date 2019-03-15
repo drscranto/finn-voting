@@ -1,0 +1,12 @@
+name: find-apartments
+title: find-apartments
+username:
+account: drscranto
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 722111
+bundleId: 1880962
+url: https://drscranto.shinyapps.io/find-apartments/
+when: 1550426104.96295
+asMultiple: FALSE
+asStatic: FALSE
