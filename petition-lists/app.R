@@ -1,3 +1,13 @@
+# Add another tab to it
+# add voter id number back in
+# A way to look up a voter by name and address (full mailing address) and indicate that they signed the petition
+# include fuzzy matching that you can turn on and off
+# display possible matches 
+# indicate signed or moved or weren't home or refused or inaccesible or speaks another language
+# and add notes
+# forget google drive
+
+# when a volunteer is out on the street let them enter in data in real time maybe to a google form and read from google drive
 
 library(shiny)
 
