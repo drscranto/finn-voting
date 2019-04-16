@@ -5,9 +5,9 @@ account: drscranto
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 722070
-bundleId: 1915557
+bundleId: 1986951
 url: https://drscranto.shinyapps.io/petition-lists/
-when: 1551743241.03104
+when: 1554396933.17009
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: .Rapp.history|data/.DS_Store|data/SmallWalkList20190217.csv
+ignoredFiles: .Rapp.history|data/.DS_Store

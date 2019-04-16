@@ -3,20 +3,21 @@
 
 library(shiny)
 
-big.data <- read.csv("data/BigWalkList20190217.csv", stringsAsFactors=FALSE)
+big.data <- read.csv("data/bigdata_backup_416.csv", stringsAsFactors=FALSE)
 
-#big.data <- read.csv("data/SmallWalkList20190217.csv", stringsAsFactors=FALSE)
+#big.data <- read.csv("data/smalldata.csv", stringsAsFactors=FALSE)
 #big.data[,c("Signed", "Refused", "Not.Home", "Moved", "Inaccessible", "Language", "Notes")] <- ""
-#write.csv(big.data,file="data/BigWalkList20190217.csv",row.names=FALSE)
+#big.data[,c("Support.Oppose")] <- ""
+#write.csv(big.data,file="data/bigdata_backup_416.csv",row.names=FALSE)
 
 #small.bool <- big.data$Ward==5 | big.data$Ward==7
 #small.data <- big.data[small.bool,]
-#write.csv(small.data,file="data/SmallWalkList20190217.csv",row.names=FALSE)
+#write.csv(small.data,file="data/smalldata.csv",row.names=FALSE)
 
 display.columns1 <- c("ID.Number","First.Name","Last.Name","Ward","Division","Age","Party.Code","Last.Vote.Date","Vote.Percent","House.Number","Street.Name")
 print.columns <- c("ID.Number","Ward","Division","ID.Number","First.Name","Last.Name","Gender","Age","Last.Vote.Date","House.Number","Street.Name","Apartment.Number","Home.Phone")
 display.columns2 <- c("ID.Number","First.Name","Last.Name","Ward","Division","House.Number","Street.Name")
-input.columns <- c("Signed", "Refused", "Not.Home", "Moved", "Inaccessible", "Language", "Notes")
+input.columns <- c("Signed", "Refused", "Not.Home", "Moved", "Inaccessible", "Language", "Support.Oppose","Notes")
 
 ui <- fluidPage(
    
@@ -46,7 +47,9 @@ ui <- fluidPage(
         textOutput("voterWarning"),
         textOutput("totalChanges"),
         br(),
-        actionButton("writeinput", "Save All Changes to File")
+        actionButton("writeinput", "Save All Changes to File"),
+        br(),br(),br(),
+        downloadButton("downloadAll", "Download all as a backup")
       ),
       
       mainPanel(
@@ -84,11 +87,17 @@ ui <- fluidPage(
                    tableOutput("voterList2"),
                    # TODO ensure only one voter is used
                    h3("Enter data:"),
-                   radioButtons("allinputs", NULL,inline=TRUE,
-                                     choiceNames = c("Signed petition","Refused","Not Home","Moved",
-                                                 "Otherwise Inaccessible","Not an English speaker"),
-                                choiceValues = 1:6
+                   radioButtons("contact", NULL,inline=TRUE,
+                                     choiceNames = c("Signed petition","Refused","Not Home",
+                                                     "Moved","Otherwise Inaccessible",
+                                                     "Not an English speaker","NA"),
+                                choiceValues = 1:7
                    ),
+                   selectInput("support","Indicate level of support:",
+                               choices = c("0 - Unknown", "1 - Strong Support", "2 - Lean Support", 
+                                           "3 -Undecided", "4 -Lean Oppose", "5 - Strong Oppose"),
+                               selected = "0 - Unknown"
+                               ),
                    textInput("inputnotes","Notes:",value = "", width='600px'),
                    tableOutput("voterList3")
           )
@@ -176,24 +185,38 @@ server <- function(input, output) {
    
    displayData3 <- reactive({
      sub.data <- subsetDataInput()
-     sub.inputs <- new.data$big.inputs[new.data$big.inputs$ID.Number == sub.data[1,"ID.Number"],input.columns]
+     sub.inputs <- new.data$big.inputs[new.data$big.inputs$ID.Number == sub.data[1,"ID.Number"],
+                                       input.columns]
      return(sub.inputs)
    })
 
    one.voter <- reactiveValues(warning.text = NULL)
    
    observeEvent(input$saveinput,{
+     
      sub.data <- subsetDataInput()
      if (nrow(sub.data)==1){
+       if(as.numeric(input$contact) < 7){
+         new.data$big.inputs[new.data$big.inputs$ID.Number == sub.data[1,"ID.Number"],
+                             as.character(input.columns[as.numeric(input$contact)])] <- "TRUE"
+         }
        new.data$big.inputs[new.data$big.inputs$ID.Number == sub.data[1,"ID.Number"],
-                           as.character(input.columns[as.numeric(input$allinputs)])] <- "TRUE"
-       new.data$big.inputs[new.data$big.inputs$ID.Number == sub.data[1,"ID.Number"],input.columns[7]] <- input$inputnotes
-         
+                           "Notes"] <- input$inputnotes
+       
+       support.int <- as.numeric(substr(input$support,1,1))
+       if(support.int==0){
+         new.data$big.inputs[new.data$big.inputs$ID.Number == sub.data[1,"ID.Number"],
+                             "Support.Oppose"] <- "NA"
+       }else{
+         new.data$big.inputs[new.data$big.inputs$ID.Number == sub.data[1,"ID.Number"],
+                             "Support.Oppose"] <- support.int
+       }
        new.data$num.changes <- new.data$num.changes+1
        one.voter$warning.text <- paste(sub.data[1,"ID.Number"], "saved!")
      }else{
        one.voter$warning.text = "Warning: Select only one voter to input data"
      }
+     
    })
 
    observeEvent(input$writeinput,{
@@ -218,6 +241,12 @@ server <- function(input, output) {
    )
    output$voterWarning <- renderText(one.voter$warning.text)
    output$totalChanges <- renderText(paste(new.data$num.changes,"total changes made"))
+   output$downloadAll <- downloadHandler(
+     filename = "bigdata_backup.csv",
+     content = function(file){
+       write.csv(big.data,file,row.names=FALSE)
+     }
+   )
 }
 
 shinyApp(ui = ui, server = server)
